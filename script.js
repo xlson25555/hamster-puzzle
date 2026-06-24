@@ -1,4 +1,3 @@
-// Настройки
 const GRID_SIZE = 4;
 const TOTAL_PIECES = GRID_SIZE * GRID_SIZE;
 
@@ -21,7 +20,7 @@ function loadImage() {
         const img = new Image();
         img.crossOrigin = 'anonymous';
         img.onload = () => {
-            console.log('✅ Фото загружено!');
+            console.log('✅ Фото загружено!', img.width, 'x', img.height);
             resolve(img);
         };
         img.onerror = () => {
@@ -88,9 +87,62 @@ function isSolved() {
 
 function renderPuzzle(img) {
     grid.innerHTML = '';
-    
-    if (!img) {
-        // Заглушка, если фото не загрузилось
+
+    // 🔥 НОВЫЙ ПОДХОД: используем canvas для идеальной нарезки
+    if (img) {
+        // Создаём canvas, чтобы нарезать картинку на кусочки
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Размер одного кусочка
+        const pieceSize = 100 / GRID_SIZE;
+        
+        pieces.forEach((pieceIndex, position) => {
+            const cell = document.createElement('div');
+            cell.className = 'puzzle-piece';
+            
+            if (pieceIndex === TOTAL_PIECES - 1) {
+                cell.classList.add('empty');
+                cell.dataset.index = position;
+                grid.appendChild(cell);
+                return;
+            }
+
+            // Вычисляем позицию кусочка в исходной картинке
+            const row = Math.floor(pieceIndex / GRID_SIZE);
+            const col = pieceIndex % GRID_SIZE;
+            
+            // Рисуем кусочек на canvas
+            const pieceCanvas = document.createElement('canvas');
+            const pCtx = pieceCanvas.getContext('2d');
+            
+            // 🔥 Берём точный фрагмент картинки
+            const sourceX = col * (img.width / GRID_SIZE);
+            const sourceY = row * (img.height / GRID_SIZE);
+            const sourceW = img.width / GRID_SIZE;
+            const sourceH = img.height / GRID_SIZE;
+            
+            pieceCanvas.width = sourceW;
+            pieceCanvas.height = sourceH;
+            
+            pCtx.drawImage(img, sourceX, sourceY, sourceW, sourceH, 0, 0, sourceW, sourceH);
+            
+            // Превращаем canvas в картинку
+            cell.style.backgroundImage = `url(${pieceCanvas.toDataURL('image/jpeg')})`;
+            cell.style.backgroundSize = 'cover';
+            cell.style.backgroundPosition = 'center';
+            
+            cell.dataset.index = position;
+            cell.addEventListener('click', () => onCellClick(position));
+            cell.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                onCellClick(position);
+            });
+            
+            grid.appendChild(cell);
+        });
+    } else {
+        // Заглушка если нет фото
         pieces.forEach((_, position) => {
             const cell = document.createElement('div');
             cell.className = 'puzzle-piece';
@@ -105,45 +157,7 @@ function renderPuzzle(img) {
             });
             grid.appendChild(cell);
         });
-        return;
     }
-
-    // 🔥 НОВЫЙ СПОСОБ РЕЗКИ — ПРАВИЛЬНЫЙ!
-    pieces.forEach((pieceIndex, position) => {
-        const cell = document.createElement('div');
-        cell.className = 'puzzle-piece';
-        
-        if (pieceIndex === TOTAL_PIECES - 1) {
-            cell.classList.add('empty');
-            cell.dataset.index = position;
-            grid.appendChild(cell);
-            return;
-        }
-
-        // Вычисляем, где находится этот кусочек в исходной картинке
-        const row = Math.floor(pieceIndex / GRID_SIZE);
-        const col = pieceIndex % GRID_SIZE;
-        
-        // 🔥 ПРАВИЛЬНЫЙ РАСЧЁТ ПОЗИЦИИ
-        const pieceWidth = 100 / GRID_SIZE;
-        const xPos = col * pieceWidth;
-        const yPos = row * pieceWidth;
-        
-        cell.style.backgroundImage = `url(${img.src})`;
-        cell.style.backgroundSize = `${GRID_SIZE * 100}% ${GRID_SIZE * 100}%`;
-        cell.style.backgroundPosition = `-${xPos}% -${yPos}%`;
-        cell.style.backgroundRepeat = 'no-repeat';
-        cell.style.backgroundColor = '#e8ddd0';
-        
-        cell.dataset.index = position;
-        cell.addEventListener('click', () => onCellClick(position));
-        cell.addEventListener('touchend', (e) => {
-            e.preventDefault();
-            onCellClick(position);
-        });
-        
-        grid.appendChild(cell);
-    });
     
     if (isSolved() && !isWin) {
         isWin = true;
@@ -193,6 +207,3 @@ async function main() {
 }
 
 main();
-
-// Для отладки
-window.__puzzle = { pieces, emptyIndex, getNeighbors, swapPieces, isSolved, renderPuzzle };
