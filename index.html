@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>🐹 Хомячья уборка</title>
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+    <div id="app">
+        <h1>🐹 Хомячья уборка</h1>
+        <p class="subtitle">Собери картинку!</p>
+
+        <div class="game-container">
+            <div id="puzzle-grid"></div>
+        </div>
+
+        <div class="controls">
+            <button id="shuffle-btn">🔀 Перемешать</button>
+            <button id="reset-btn">🔄 Сброс</button>
+            <span id="moves">Ходов: 0</span>
+        </div>
+
+        <div id="win-message" class="hidden">
+            🎉 Поздравляем! Вы собрали хомячка!
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
